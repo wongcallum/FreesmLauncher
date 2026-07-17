@@ -14,6 +14,10 @@
 
 class ModrinthAPI : public ResourceAPI {
    public:
+    // Defaults to the public modrinth.com backend; pass another base URL to
+    // point this API at a self-hosted instance (see ModrinthInstances.h).
+    explicit ModrinthAPI(QString baseUrl = BuildConfig.MODRINTH_PROD_URL) : m_base_url(std::move(baseUrl)) {}
+
     std::pair<Task::Ptr, QByteArray*> currentVersion(const QString& hash, const QString& hash_format) const;
 
     std::pair<Task::Ptr, QByteArray*> currentVersions(const QStringList& hashes, QString hash_format) const;
@@ -30,7 +34,7 @@ class ModrinthAPI : public ResourceAPI {
 
     std::pair<Task::Ptr, QByteArray*> getProjects(QStringList addonIds) const override;
 
-    static std::pair<Task::Ptr, QByteArray*> getModCategories();
+    static std::pair<Task::Ptr, QByteArray*> getModCategories(const QString& baseUrl = BuildConfig.MODRINTH_PROD_URL);
     static QList<ModPlatform::Category> loadCategories(const QByteArray& response, const QString& projectType);
     static QList<ModPlatform::Category> loadModCategories(const QByteArray& response);
 
@@ -102,6 +106,8 @@ class ModrinthAPI : public ResourceAPI {
     }
 
    private:
+    QString m_base_url;
+
     static QString resourceTypeParameter(ModPlatform::ResourceType type)
     {
         switch (type) {
@@ -172,17 +178,17 @@ class ModrinthAPI : public ResourceAPI {
         }
         get_arguments.append(QString("facets=%1").arg(createFacets(args)));
 
-        return BuildConfig.MODRINTH_PROD_URL + "/search?" + get_arguments.join('&');
+        return m_base_url + "/search?" + get_arguments.join('&');
     };
 
     auto getInfoURL(const QString& id) const -> std::optional<QString> override
     {
-        return BuildConfig.MODRINTH_PROD_URL + "/project/" + id;
+        return m_base_url + "/project/" + id;
     };
 
     auto getMultipleModInfoURL(const QStringList& ids) const -> QString
     {
-        return BuildConfig.MODRINTH_PROD_URL + QString("/projects?ids=[\"%1\"]").arg(ids.join("\",\""));
+        return m_base_url + QString("/projects?ids=[\"%1\"]").arg(ids.join("\",\""));
     };
 
     auto getVersionsURL(const VersionSearchArgs& args) const -> std::optional<QString> override
@@ -197,7 +203,7 @@ class ModrinthAPI : public ResourceAPI {
         get_arguments.append(QString("include_changelog=%1").arg(args.includeChangelog ? "true" : "false"));
 
         return QString("%1/project/%2/version%3%4")
-            .arg(BuildConfig.MODRINTH_PROD_URL, args.pack->addonId.toString(), get_arguments.isEmpty() ? "" : "?", get_arguments.join('&'));
+            .arg(m_base_url, args.pack->addonId.toString(), get_arguments.isEmpty() ? "" : "?", get_arguments.join('&'));
     };
 
     QString getGameVersionsArray(const std::vector<Version>& mcVersions) const
@@ -220,9 +226,9 @@ class ModrinthAPI : public ResourceAPI {
     std::optional<QString> getDependencyURL(const DependencySearchArgs& args) const override
     {
         return args.dependency.version.length() != 0
-                   ? QString("%1/version/%2").arg(BuildConfig.MODRINTH_PROD_URL, args.dependency.version)
+                   ? QString("%1/version/%2").arg(m_base_url, args.dependency.version)
                    : QString(R"(%1/project/%2/version?game_versions=["%3"]&loaders=["%4"]&include_changelog=%5)")
-                         .arg(BuildConfig.MODRINTH_PROD_URL)
+                         .arg(m_base_url)
                          .arg(args.dependency.addonId.toString())
                          .arg(mapMCVersionToModrinth(args.mcVersion))
                          .arg(getModLoaderStrings(args.loader).join("\",\""))

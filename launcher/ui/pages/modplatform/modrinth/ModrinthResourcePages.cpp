@@ -46,9 +46,25 @@
 
 namespace ResourceDownload {
 
-ModrinthModPage::ModrinthModPage(ModDownloadDialog* dialog, BaseInstance& instance) : ModPage(dialog, instance)
+namespace {
+// The instance the next page constructor will bind to (see the header note).
+ModrinthInstance s_pendingInstance = defaultModrinthInstance();
+}  // namespace
+
+void Modrinth::setPendingInstance(const ModrinthInstance& inst)
 {
-    m_model = new ModModel(instance, new ModrinthAPI(), Modrinth::debugName(), Modrinth::metaEntryBase());
+    s_pendingInstance = inst;
+}
+
+const ModrinthInstance& Modrinth::pendingInstance()
+{
+    return s_pendingInstance;
+}
+
+ModrinthModPage::ModrinthModPage(ModDownloadDialog* dialog, BaseInstance& instance)
+    : ModPage(dialog, instance), m_mr(Modrinth::pendingInstance())
+{
+    m_model = new ModModel(instance, new ModrinthAPI(m_mr.apiUrl), m_mr.name, m_mr.metaEntryBase);
     m_ui->packView->setModel(m_model);
 
     addSortings();
@@ -64,9 +80,9 @@ ModrinthModPage::ModrinthModPage(ModDownloadDialog* dialog, BaseInstance& instan
 }
 
 ModrinthResourcePackPage::ModrinthResourcePackPage(ResourcePackDownloadDialog* dialog, BaseInstance& instance)
-    : ResourcePackResourcePage(dialog, instance)
+    : ResourcePackResourcePage(dialog, instance), m_mr(Modrinth::pendingInstance())
 {
-    m_model = new ResourcePackResourceModel(instance, new ModrinthAPI(), Modrinth::debugName(), Modrinth::metaEntryBase());
+    m_model = new ResourcePackResourceModel(instance, new ModrinthAPI(m_mr.apiUrl), m_mr.name, m_mr.metaEntryBase);
     m_ui->packView->setModel(m_model);
 
     addSortings();
@@ -82,9 +98,9 @@ ModrinthResourcePackPage::ModrinthResourcePackPage(ResourcePackDownloadDialog* d
 }
 
 ModrinthTexturePackPage::ModrinthTexturePackPage(TexturePackDownloadDialog* dialog, BaseInstance& instance)
-    : TexturePackResourcePage(dialog, instance)
+    : TexturePackResourcePage(dialog, instance), m_mr(Modrinth::pendingInstance())
 {
-    m_model = new TexturePackResourceModel(instance, new ModrinthAPI(), Modrinth::debugName(), Modrinth::metaEntryBase());
+    m_model = new TexturePackResourceModel(instance, new ModrinthAPI(m_mr.apiUrl), m_mr.name, m_mr.metaEntryBase);
     m_ui->packView->setModel(m_model);
 
     addSortings();
@@ -100,9 +116,9 @@ ModrinthTexturePackPage::ModrinthTexturePackPage(TexturePackDownloadDialog* dial
 }
 
 ModrinthShaderPackPage::ModrinthShaderPackPage(ShaderPackDownloadDialog* dialog, BaseInstance& instance)
-    : ShaderPackResourcePage(dialog, instance)
+    : ShaderPackResourcePage(dialog, instance), m_mr(Modrinth::pendingInstance())
 {
-    m_model = new ShaderPackResourceModel(instance, new ModrinthAPI(), Modrinth::debugName(), Modrinth::metaEntryBase());
+    m_model = new ShaderPackResourceModel(instance, new ModrinthAPI(m_mr.apiUrl), m_mr.name, m_mr.metaEntryBase);
     m_ui->packView->setModel(m_model);
 
     addSortings();
@@ -117,9 +133,10 @@ ModrinthShaderPackPage::ModrinthShaderPackPage(ShaderPackDownloadDialog* dialog,
     m_ui->packDescription->setMetaEntry(metaEntryBase());
 }
 
-ModrinthDataPackPage::ModrinthDataPackPage(DataPackDownloadDialog* dialog, BaseInstance& instance) : DataPackResourcePage(dialog, instance)
+ModrinthDataPackPage::ModrinthDataPackPage(DataPackDownloadDialog* dialog, BaseInstance& instance)
+    : DataPackResourcePage(dialog, instance), m_mr(Modrinth::pendingInstance())
 {
-    m_model = new DataPackResourceModel(instance, new ModrinthAPI(), Modrinth::debugName(), Modrinth::metaEntryBase());
+    m_model = new DataPackResourceModel(instance, new ModrinthAPI(m_mr.apiUrl), m_mr.name, m_mr.metaEntryBase);
     m_ui->packView->setModel(m_model);
 
     addSortings();
@@ -165,7 +182,7 @@ std::unique_ptr<ModFilterWidget> ModrinthModPage::createFilterWidget()
 
 void ModrinthModPage::prepareProviderCategories()
 {
-    auto [categoriesTask, response] = ModrinthAPI::getModCategories();
+    auto [categoriesTask, response] = ModrinthAPI::getModCategories(m_mr.apiUrl);
     m_categoriesTask = categoriesTask;
     connect(m_categoriesTask.get(), &Task::succeeded, [this, response]() {
         auto categories = ModrinthAPI::loadModCategories(*response);

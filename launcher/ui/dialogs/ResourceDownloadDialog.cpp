@@ -46,6 +46,7 @@
 
 #include "modplatform/flame/FlameAPI.h"
 #include "modplatform/modrinth/ModrinthAPI.h"
+#include "modplatform/modrinth/ModrinthInstances.h"
 #include "ui/widgets/PageContainer.h"
 
 namespace ResourceDownload {
@@ -308,9 +309,13 @@ QList<BasePage*> ModDownloadDialog::getPages()
     auto loaders = static_cast<MinecraftInstance*>(m_instance)->getPackProfile()->getSupportedModLoaders().value();
 
     if (ModrinthAPI::validateModLoaders(loaders)) {
-        auto* page = ModrinthModPage::create(this, *m_instance);
-        page->setSuppressInitialSearch(m_suppressInitialSearch);
-        pages.append(page);
+        for (auto const& inst : modrinthInstances()) {
+            Modrinth::setPendingInstance(inst);
+            auto* page = ModrinthModPage::create(this, *m_instance);
+            page->setSuppressInitialSearch(m_suppressInitialSearch);
+            pages.append(page);
+        }
+        Modrinth::setPendingInstance(defaultModrinthInstance());
     }
     if (APPLICATION->capabilities() & Application::SupportsFlame && FlameAPI::validateModLoaders(loaders)) {
         auto* page = FlameModPage::create(this, *m_instance);
@@ -356,9 +361,13 @@ QList<BasePage*> ResourcePackDownloadDialog::getPages()
 {
     QList<BasePage*> pages;
 
-    auto* modrinthPage = ModrinthResourcePackPage::create(this, *m_instance);
-    modrinthPage->setSuppressInitialSearch(m_suppressInitialSearch);
-    pages.append(modrinthPage);
+    for (auto const& inst : modrinthInstances()) {
+        Modrinth::setPendingInstance(inst);
+        auto* modrinthPage = ModrinthResourcePackPage::create(this, *m_instance);
+        modrinthPage->setSuppressInitialSearch(m_suppressInitialSearch);
+        pages.append(modrinthPage);
+    }
+    Modrinth::setPendingInstance(defaultModrinthInstance());
     if (APPLICATION->capabilities() & Application::SupportsFlame) {
         auto* flamePage = FlameResourcePackPage::create(this, *m_instance);
         flamePage->setSuppressInitialSearch(m_suppressInitialSearch);
@@ -388,9 +397,13 @@ QList<BasePage*> TexturePackDownloadDialog::getPages()
 {
     QList<BasePage*> pages;
 
-    auto* modrinthPage = ModrinthTexturePackPage::create(this, *m_instance);
-    modrinthPage->setSuppressInitialSearch(m_suppressInitialSearch);
-    pages.append(modrinthPage);
+    for (auto const& inst : modrinthInstances()) {
+        Modrinth::setPendingInstance(inst);
+        auto* modrinthPage = ModrinthTexturePackPage::create(this, *m_instance);
+        modrinthPage->setSuppressInitialSearch(m_suppressInitialSearch);
+        pages.append(modrinthPage);
+    }
+    Modrinth::setPendingInstance(defaultModrinthInstance());
     if (APPLICATION->capabilities() & Application::SupportsFlame) {
         auto* flamePage = FlameTexturePackPage::create(this, *m_instance);
         flamePage->setSuppressInitialSearch(m_suppressInitialSearch);
@@ -419,9 +432,13 @@ ShaderPackDownloadDialog::ShaderPackDownloadDialog(QWidget* parent,
 QList<BasePage*> ShaderPackDownloadDialog::getPages()
 {
     QList<BasePage*> pages;
-    auto* modrinthPage = ModrinthShaderPackPage::create(this, *m_instance);
-    modrinthPage->setSuppressInitialSearch(m_suppressInitialSearch);
-    pages.append(modrinthPage);
+    for (auto const& inst : modrinthInstances()) {
+        Modrinth::setPendingInstance(inst);
+        auto* modrinthPage = ModrinthShaderPackPage::create(this, *m_instance);
+        modrinthPage->setSuppressInitialSearch(m_suppressInitialSearch);
+        pages.append(modrinthPage);
+    }
+    Modrinth::setPendingInstance(defaultModrinthInstance());
     if (APPLICATION->capabilities() & Application::SupportsFlame) {
         auto* flamePage = FlameShaderPackPage::create(this, *m_instance);
         flamePage->setSuppressInitialSearch(m_suppressInitialSearch);
@@ -467,9 +484,13 @@ DataPackDownloadDialog::DataPackDownloadDialog(QWidget* parent,
 QList<BasePage*> DataPackDownloadDialog::getPages()
 {
     QList<BasePage*> pages;
-    auto* modrinthPage = ModrinthDataPackPage::create(this, *m_instance);
-    modrinthPage->setSuppressInitialSearch(m_suppressInitialSearch);
-    pages.append(modrinthPage);
+    for (auto const& inst : modrinthInstances()) {
+        Modrinth::setPendingInstance(inst);
+        auto* modrinthPage = ModrinthDataPackPage::create(this, *m_instance);
+        modrinthPage->setSuppressInitialSearch(m_suppressInitialSearch);
+        pages.append(modrinthPage);
+    }
+    Modrinth::setPendingInstance(defaultModrinthInstance());
     if (APPLICATION->capabilities() & Application::SupportsFlame) {
         auto* flamePage = FlameDataPackPage::create(this, *m_instance);
         flamePage->setSuppressInitialSearch(m_suppressInitialSearch);

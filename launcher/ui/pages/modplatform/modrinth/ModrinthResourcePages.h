@@ -39,6 +39,7 @@
 #pragma once
 
 #include "modplatform/ResourceAPI.h"
+#include "modplatform/modrinth/ModrinthInstances.h"
 
 #include "ui/pages/modplatform/DataPackPage.h"
 #include "ui/pages/modplatform/ModPage.h"
@@ -69,6 +70,13 @@ static inline QString metaEntryBase()
 {
     return "ModrinthPacks";
 }
+
+// Page construction goes through a fixed-signature templated factory
+// (ResourcePage::create<T>), so the target instance is handed to the
+// about-to-be-built page through this thread-shared slot: set it immediately
+// before calling create(), and the page's constructor captures it.
+void setPendingInstance(const ModrinthInstance& inst);
+const ModrinthInstance& pendingInstance();
 }  // namespace Modrinth
 
 class ModrinthModPage : public ModPage {
@@ -85,11 +93,14 @@ class ModrinthModPage : public ModPage {
 
     bool shouldDisplay() const override;
 
-    inline auto displayName() const -> QString override { return Modrinth::displayName(); }
+    inline auto displayName() const -> QString override { return m_mr.name; }
     inline auto icon() const -> QIcon override { return Modrinth::icon(); }
-    inline auto id() const -> QString override { return Modrinth::id(); }
+    inline auto id() const -> QString override { return m_mr.id; }
     inline auto debugName() const -> QString override { return Modrinth::debugName(); }
-    inline auto metaEntryBase() const -> QString override { return Modrinth::metaEntryBase(); }
+    inline auto metaEntryBase() const -> QString override { return m_mr.metaEntryBase; }
+
+    // The Modrinth instance this tab browses (captured from pendingInstance()).
+    ModrinthInstance m_mr = defaultModrinthInstance();
 
     inline auto helpPage() const -> QString override { return "Mod-platform"; }
 
@@ -114,11 +125,14 @@ class ModrinthResourcePackPage : public ResourcePackResourcePage {
 
     bool shouldDisplay() const override;
 
-    inline auto displayName() const -> QString override { return Modrinth::displayName(); }
+    inline auto displayName() const -> QString override { return m_mr.name; }
     inline auto icon() const -> QIcon override { return Modrinth::icon(); }
-    inline auto id() const -> QString override { return Modrinth::id(); }
+    inline auto id() const -> QString override { return m_mr.id; }
     inline auto debugName() const -> QString override { return Modrinth::debugName(); }
-    inline auto metaEntryBase() const -> QString override { return Modrinth::metaEntryBase(); }
+    inline auto metaEntryBase() const -> QString override { return m_mr.metaEntryBase; }
+
+    // The Modrinth instance this tab browses (captured from pendingInstance()).
+    ModrinthInstance m_mr = defaultModrinthInstance();
 
     inline auto helpPage() const -> QString override { return ""; }
 };
@@ -137,11 +151,14 @@ class ModrinthTexturePackPage : public TexturePackResourcePage {
 
     bool shouldDisplay() const override;
 
-    inline auto displayName() const -> QString override { return Modrinth::displayName(); }
+    inline auto displayName() const -> QString override { return m_mr.name; }
     inline auto icon() const -> QIcon override { return Modrinth::icon(); }
-    inline auto id() const -> QString override { return Modrinth::id(); }
+    inline auto id() const -> QString override { return m_mr.id; }
     inline auto debugName() const -> QString override { return Modrinth::debugName(); }
-    inline auto metaEntryBase() const -> QString override { return Modrinth::metaEntryBase(); }
+    inline auto metaEntryBase() const -> QString override { return m_mr.metaEntryBase; }
+
+    // The Modrinth instance this tab browses (captured from pendingInstance()).
+    ModrinthInstance m_mr = defaultModrinthInstance();
 
     inline auto helpPage() const -> QString override { return ""; }
 };
@@ -160,11 +177,14 @@ class ModrinthShaderPackPage : public ShaderPackResourcePage {
 
     bool shouldDisplay() const override;
 
-    inline auto displayName() const -> QString override { return Modrinth::displayName(); }
+    inline auto displayName() const -> QString override { return m_mr.name; }
     inline auto icon() const -> QIcon override { return Modrinth::icon(); }
-    inline auto id() const -> QString override { return Modrinth::id(); }
+    inline auto id() const -> QString override { return m_mr.id; }
     inline auto debugName() const -> QString override { return Modrinth::debugName(); }
-    inline auto metaEntryBase() const -> QString override { return Modrinth::metaEntryBase(); }
+    inline auto metaEntryBase() const -> QString override { return m_mr.metaEntryBase; }
+
+    // The Modrinth instance this tab browses (captured from pendingInstance()).
+    ModrinthInstance m_mr = defaultModrinthInstance();
 
     inline auto helpPage() const -> QString override { return ""; }
 };
@@ -183,11 +203,14 @@ class ModrinthDataPackPage : public DataPackResourcePage {
 
     bool shouldDisplay() const override;
 
-    inline auto displayName() const -> QString override { return Modrinth::displayName(); }
+    inline auto displayName() const -> QString override { return m_mr.name; }
     inline auto icon() const -> QIcon override { return Modrinth::icon(); }
-    inline auto id() const -> QString override { return Modrinth::id(); }
+    inline auto id() const -> QString override { return m_mr.id; }
     inline auto debugName() const -> QString override { return Modrinth::debugName(); }
-    inline auto metaEntryBase() const -> QString override { return Modrinth::metaEntryBase(); }
+    inline auto metaEntryBase() const -> QString override { return m_mr.metaEntryBase; }
+
+    // The Modrinth instance this tab browses (captured from pendingInstance()).
+    ModrinthInstance m_mr = defaultModrinthInstance();
 
     inline auto helpPage() const -> QString override { return ""; }
 };

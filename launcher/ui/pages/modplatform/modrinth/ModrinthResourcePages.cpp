@@ -48,17 +48,27 @@ namespace ResourceDownload {
 
 namespace {
 // The instance the next page constructor will bind to (see the header note).
-ModrinthInstance s_pendingInstance = defaultModrinthInstance();
+//
+// Must stay function-local. As a namespace-scope object its initializer would run
+// during static init, and defaultModrinthInstance() reads BuildConfig — a global
+// in another translation unit, so the relative init order is unspecified. Losing
+// that race reads an empty MODRINTH_PROD_URL, which modrinthInstances() then
+// caches for the life of the process, leaving every tab with an empty base URL.
+ModrinthInstance& pendingInstanceRef()
+{
+    static ModrinthInstance inst = defaultModrinthInstance();
+    return inst;
+}
 }  // namespace
 
 void Modrinth::setPendingInstance(const ModrinthInstance& inst)
 {
-    s_pendingInstance = inst;
+    pendingInstanceRef() = inst;
 }
 
 const ModrinthInstance& Modrinth::pendingInstance()
 {
-    return s_pendingInstance;
+    return pendingInstanceRef();
 }
 
 ModrinthModPage::ModrinthModPage(ModDownloadDialog* dialog, BaseInstance& instance)

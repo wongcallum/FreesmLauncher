@@ -1015,6 +1015,8 @@ SET(LAUNCHER_SOURCES
     ui/pages/global/ProxyPage.h
     ui/pages/global/APIPage.cpp
     ui/pages/global/APIPage.h
+    ui/pages/global/ModrinthInstancesPage.cpp
+    ui/pages/global/ModrinthInstancesPage.h
 
     # GUI - platform pages
     ui/pages/modplatform/CustomPage.cpp
@@ -1278,6 +1280,7 @@ qt_wrap_ui(LAUNCHER_UI
     ui/pages/global/JavaPage.ui
     ui/pages/global/LauncherPage.ui
     ui/pages/global/APIPage.ui
+    ui/pages/global/ModrinthInstancesPage.ui
     ui/pages/global/ProxyPage.ui
     ui/pages/global/ExternalToolsPage.ui
     ui/pages/instance/ExternalResourcesPage.ui

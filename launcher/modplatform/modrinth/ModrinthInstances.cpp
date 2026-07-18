@@ -2,12 +2,21 @@
 
 #include "modplatform/modrinth/ModrinthInstances.h"
 
+#include "Application.h"
 #include "BuildConfig.h"
+#include "settings/SettingsObject.h"
 
-#include <QProcessEnvironment>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QRegularExpression>
+#include <QSet>
 
-static QString slugify(const QString& name)
+namespace {
+// Settings key holding the extra instances as a JSON array of { name, url }.
+const char* const kSettingKey = "ExtraModrinthInstances";
+
+QString slugify(const QString& name)
 {
     static const QRegularExpression nonAlnum("[^a-z0-9]+");
     QString slug = name.toLower().replace(nonAlnum, "-");
@@ -18,46 +27,83 @@ static QString slugify(const QString& name)
     return slug;
 }
 
-static QList<ModrinthInstance> buildInstances()
+// Trim whitespace and drop any trailing slashes so two URLs that differ only by
+// a trailing '/' don't produce a doubled separator when we append paths.
+QString normalizeUrl(QString url)
 {
-    QList<ModrinthInstance> list;
+    url = url.trimmed();
+    while (url.endsWith('/'))
+        url.chop(1);
+    return url;
+}
+}  // namespace
 
-    // The public modrinth.com backend is always present and always first, so
-    // the launcher never loses access to it regardless of configuration.
-    list.append({ "modrinth", "Modrinth", BuildConfig.MODRINTH_PROD_URL, "ModrinthPacks" });
+QList<ModrinthUserInstance> loadUserModrinthInstances()
+{
+    QList<ModrinthUserInstance> list;
 
-    const QString env = QProcessEnvironment::systemEnvironment().value("FREESM_MODRINTH_INSTANCES");
-    const auto entries = env.split(';', Qt::SkipEmptyParts);
-    for (const auto& entry : entries) {
-        const int sep = entry.indexOf('|');
-        if (sep <= 0)
+    const QString raw = APPLICATION->settings()->get(kSettingKey).toString();
+    const QJsonDocument doc = QJsonDocument::fromJson(raw.toUtf8());
+    if (!doc.isArray())
+        return list;
+
+    for (const QJsonValue& value : doc.array()) {
+        const QJsonObject obj = value.toObject();
+        ModrinthUserInstance inst{ obj.value("name").toString().trimmed(), normalizeUrl(obj.value("url").toString()) };
+        if (inst.name.isEmpty() || inst.apiUrl.isEmpty())
             continue;
-
-        QString name = entry.left(sep).trimmed();
-        QString url = entry.mid(sep + 1).trimmed();
-        while (url.endsWith('/'))
-            url.chop(1);
-        if (name.isEmpty() || url.isEmpty())
-            continue;
-
-        QString slug = slugify(name);
-        if (slug.isEmpty())
-            slug = QString::number(list.size());
-
-        // Keep ids/cache namespaces distinct from the built-in public instance.
-        list.append({ "modrinth-" + slug, name, url, "ModrinthPacks-" + slug });
+        list.append(inst);
     }
 
     return list;
 }
 
-const QList<ModrinthInstance>& modrinthInstances()
+void saveUserModrinthInstances(const QList<ModrinthUserInstance>& instances)
 {
-    static const QList<ModrinthInstance> instances = buildInstances();
-    return instances;
+    QJsonArray arr;
+    for (const auto& inst : instances) {
+        const QString name = inst.name.trimmed();
+        const QString url = normalizeUrl(inst.apiUrl);
+        if (name.isEmpty() || url.isEmpty())
+            continue;
+
+        QJsonObject obj;
+        obj["name"] = name;
+        obj["url"] = url;
+        arr.append(obj);
+    }
+
+    APPLICATION->settings()->set(kSettingKey, QString::fromUtf8(QJsonDocument(arr).toJson(QJsonDocument::Compact)));
 }
 
-const ModrinthInstance& defaultModrinthInstance()
+QList<ModrinthInstance> modrinthInstances()
 {
-    return modrinthInstances().first();
+    QList<ModrinthInstance> list;
+
+    // The public modrinth.com backend is always present and always first.
+    const ModrinthInstance def = defaultModrinthInstance();
+    list.append(def);
+
+    // Keep ids/cache namespaces distinct from each other and the public instance:
+    // a colliding slug would make two tabs share one on-disk metadata cache.
+    QSet<QString> usedSlugs{ slugify(def.name) };
+    for (const auto& user : loadUserModrinthInstances()) {
+        QString slug = slugify(user.name);
+        if (slug.isEmpty())
+            slug = QString::number(list.size());
+
+        const QString baseSlug = slug;
+        for (int suffix = 2; usedSlugs.contains(slug); ++suffix)
+            slug = baseSlug + "-" + QString::number(suffix);
+        usedSlugs.insert(slug);
+
+        list.append({ "modrinth-" + slug, user.name, user.apiUrl, "ModrinthPacks-" + slug });
+    }
+
+    return list;
+}
+
+ModrinthInstance defaultModrinthInstance()
+{
+    return { "modrinth", "Modrinth", BuildConfig.MODRINTH_PROD_URL, "ModrinthPacks" };
 }

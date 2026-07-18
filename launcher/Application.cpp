@@ -68,6 +68,7 @@
 #include "ui/pages/global/LanguagePage.h"
 #include "ui/pages/global/LauncherPage.h"
 #include "ui/pages/global/MinecraftPage.h"
+#include "ui/pages/global/ModrinthInstancesPage.h"
 #include "ui/pages/global/ProxyPage.h"
 
 #include "ui/setupwizard/AutoJavaWizardPage.h"
@@ -924,6 +925,10 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         m_settings->registerSetting("ModrinthToken", "");
         m_settings->registerSetting("UserAgentOverride", "");
 
+        // Extra Modrinth-API backends browsed alongside the public one, edited in the
+        // Modrinth Instances settings page. JSON array of { "name", "url" } objects.
+        m_settings->registerSetting("ExtraModrinthInstances", "");
+
         // FTBApp instances
         m_settings->registerSetting("FTBAppInstancesPath", "");
 
@@ -940,6 +945,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
             m_globalSettingsProvider->addPage<JavaPage>();
             m_globalSettingsProvider->addPage<AccountListPage>();
             m_globalSettingsProvider->addPage<APIPage>();
+            m_globalSettingsProvider->addPage<ModrinthInstancesPage>();
             m_globalSettingsProvider->addPage<ExternalToolsPage>();
             m_globalSettingsProvider->addPage<ProxyPage>();
         }

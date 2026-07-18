@@ -52,8 +52,9 @@ namespace {
 // Must stay function-local. As a namespace-scope object its initializer would run
 // during static init, and defaultModrinthInstance() reads BuildConfig — a global
 // in another translation unit, so the relative init order is unspecified. Losing
-// that race reads an empty MODRINTH_PROD_URL, which modrinthInstances() then
-// caches for the life of the process, leaving every tab with an empty base URL.
+// that race would seed this slot with an empty MODRINTH_PROD_URL. As a
+// function-local static it is instead initialised on first use, long after
+// BuildConfig is ready.
 ModrinthInstance& pendingInstanceRef()
 {
     static ModrinthInstance inst = defaultModrinthInstance();
